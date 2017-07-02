@@ -21,6 +21,7 @@ exports.login = function(req, res) {
         return;
       }
       if (user.password === password) {
+        user.password = "";
         res.json(user);
       } else {
         res.status(403).send("Password error");
@@ -59,6 +60,7 @@ exports.update_a_user = function(req, res) {
   User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, function(err, user) {
     if (err)
       res.send(err);
+    user.password = "";
     res.json(user);
   });
 };
