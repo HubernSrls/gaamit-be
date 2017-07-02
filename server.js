@@ -4,9 +4,10 @@ var express = require('express'),
   mongoose = require('mongoose'),
   User = require('./api/models/gaamitModel'),
   bodyParser = require('body-parser'),
-  expressValidator = require('express-validator');
+  expressValidator = require('express-validator'),
+  cors = require('cors');
 
-  const path = require('path');
+const path = require('path');
 
 mongoose.Promise = global.Promise;
 mongoose.connect('mongodb://gaamit:hubern17@ds145312.mlab.com:45312/gaamitdb');
@@ -15,6 +16,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(expressValidator([]));
 app.use(express.static(path.resolve(__dirname, 'client', 'build')));
+app.use(cors());
 
 var routes = require('./api/routes/gaamitRoutes');
 routes(app);
