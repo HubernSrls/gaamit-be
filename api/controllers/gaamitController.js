@@ -1,77 +1,115 @@
 'use strict';
 
 var mongoose = require('mongoose'),
-  User = mongoose.model('Users');
+  User = mongoose.model('Users'),
+  fetch = require('node-fetch');
+
+function serveOauthRequest(req, res, success) {
+  var token = req.get("Authorization");
+
+  if (token == null || token === "") {
+    res.status(403).send("Oauth Error");
+  }
+
+  fetch("https://stagingoauth2.promoincloud.com/oauth/validate_token", { // Call the fetch function passing the url of the API as a parameter
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  })
+  .then((resp) => resp.json())
+  .then(function(data) {
+      if (data != "ACK") {
+        res.status(403).send("Oauth Error");
+      } else {
+        success();
+      }
+  })
+  .catch(function() {
+      res.status(403).send("Oauth Error");
+  });
+}
 
 exports.login = function(req, res) {
-  var username = req.body.username;
-  var password = req.body.password;
 
-  req.checkBody('username', 'Invalid postparam').notEmpty();
-  req.checkBody('password', 'Invalid postparam').notEmpty();
+  serveOauthRequest(req, res, function() {
+    var username = req.body.username;
+    var password = req.body.password;
 
-  req.getValidationResult().then(function(result) {
-    if (!result.isEmpty()) {
-      res.status(400).send('Missing parameters');
-      return;
-    }
-    User.findOne({ 'username': username }, function(err, user) {
-      if (err || user === null) {
-        res.status(404).send('Username not found');
+    req.checkBody('username', 'Invalid postparam').notEmpty();
+    req.checkBody('password', 'Invalid postparam').notEmpty();
+
+    req.getValidationResult().then(function(result) {
+      if (!result.isEmpty()) {
+        res.status(400).send('Missing parameters');
         return;
       }
-      if (user.password === password) {
-        user.password = "";
-        res.json(user);
-      } else {
-        res.status(403).send("Password error");
-      }
+      User.findOne({ 'username': username }, function(err, user) {
+        if (err || user === null) {
+          res.status(404).send('Username not found');
+          return;
+        }
+        if (user.password === password) {
+          user.password = "";
+          res.json(user);
+        } else {
+          res.status(403).send("Password error");
+        }
+      });
     });
-  });
+  })
 
 }
 
 exports.list_all_users = function(req, res) {
-  User.find({}, function(err, user) {
-    if (err)
-      res.send(err);
-    res.json(user);
-  });
+  serveOauthRequest(req, res, function() {
+    User.find({}, function(err, user) {
+      if (err)
+        res.send(err);
+      res.json(user);
+    });
+  })
 };
 
 exports.create_a_user = function(req, res) {
-  var new_user = new User(req.body);
-  new_user.save(function(err, user) {
-    if (err)
-      res.send(err);
-    res.json(user);
-  });
+  serveOauthRequest(req, res, function() {
+    var new_user = new User(req.body);
+    new_user.save(function(err, user) {
+      if (err)
+        res.send(err);
+      res.json(user);
+    });
+  })
 };
 
 exports.read_a_user = function(req, res) {
-  User.findById(req.params.userId, function(err, user) {
-    if (err)
-      res.send(err);
-    res.json(user);
-  });
+  serveOauthRequest(req, res, function() {
+    User.findById(req.params.userId, function(err, user) {
+      if (err)
+        res.send(err);
+      res.json(user);
+    });
+  })
 };
 
 exports.update_a_user = function(req, res) {
-  User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, function(err, user) {
-    if (err)
-      res.send(err);
-    user.password = "";
-    res.json(user);
-  });
+  serveOauthRequest(req, res, function() {
+    User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, function(err, user) {
+      if (err)
+        res.send(err);
+      user.password = "";
+      res.json(user);
+    });
+  })
 };
 
 exports.delete_a_user = function(req, res) {
-
-  User.remove({
-    _id: req.params.userId
-  }, function(err, user) {
-    if (err)
-      res.send(err);
-    res.json({ message: 'User successfully deleted' });
-  });
+  serveOauthRequest(req, res, function() {
+    User.remove({
+      _id: req.params.userId
+    }, function(err, user) {
+      if (err)
+        res.send(err);
+      res.json({ message: 'User successfully deleted' });
+    });
+  })
 };

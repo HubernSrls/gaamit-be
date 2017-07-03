@@ -3,10 +3,6 @@ module.exports = function(app) {
   var gaamit = require('../controllers/gaamitController');
   const path = require('path');
 
-  app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-  });
-
   app.route('/login')
     .post(gaamit.login);
 
