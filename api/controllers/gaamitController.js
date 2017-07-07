@@ -19,13 +19,13 @@ function serveOauthRequest(req, res, success) {
   .then((resp) => resp.json())
   .then(function(data) {
       if (data != "ACK") {
-        res.status(403).send("Oauth Error");
+        res.status(401).send("Oauth Error");
       } else {
         success();
       }
   })
   .catch(function() {
-      res.status(403).send("Oauth Error");
+      res.status(401).send("Oauth Error");
   });
 }
 
