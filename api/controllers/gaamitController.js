@@ -128,8 +128,6 @@ exports.upvote_post = function(req, res) {
       var permlink = req.body.permlink;
       var postingWif = user.postingKey;
 
-      console.log(postingWif);
-
       steem.broadcast.vote(
         postingWif,
         userId, // Voter
@@ -147,3 +145,51 @@ exports.upvote_post = function(req, res) {
     });
   })
 };
+
+exports.create_post = function(req, res) {
+  serveOauthRequest(req, res, function() {
+
+    var userId = req.params.userId;
+    User.findOne({ 'steemitUsername': userId }, function(err, user) {
+      if (err) {
+        res.status(404).json("User not found")
+        return;
+      }
+
+      var permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
+      var postingWif = user.postingKey;
+
+      var title = req.body.title;
+      var body = req.body.body;
+
+      if (title === undefined || title === "") {
+        res.status(400).json("Title not found");
+        return;
+      } 
+
+      if (body === undefined || body === "") {
+        res.status(400).json("Body not found");
+        return;
+      }
+
+      steem.broadcast.comment(
+        postingWif,
+        '', // Leave parent author empty
+        "gaamit", // Main tag
+        userId, // Author
+        permlink + '-post', // Permlink
+        title, // Title
+        body, // Body
+        { tags: ['gamedev'], app: 'gaamit' }, // Json Metadata
+        function(err, result) {
+          if (err) {
+            res.status(500).json(err)
+            return
+          }
+          res.json("Post Uploaded")
+        }
+      );
+    });
+
+  });
+}

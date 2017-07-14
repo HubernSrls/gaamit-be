@@ -19,4 +19,7 @@ module.exports = function(app) {
   app.route('/upvote/:userId')
     .post(gaamit.upvote_post);
 
+  app.route('/post/:userId')
+    .post(gaamit.create_post);
+
 };
