@@ -2,7 +2,8 @@
 
 var mongoose = require('mongoose'),
   User = mongoose.model('Users'),
-  fetch = require('node-fetch');
+  fetch = require('node-fetch'),
+  steem = require('steem');
 
 function serveOauthRequest(req, res, success) {
   var token = req.get("Authorization");
@@ -32,10 +33,10 @@ function serveOauthRequest(req, res, success) {
 exports.login = function(req, res) {
 
   serveOauthRequest(req, res, function() {
-    var username = req.body.username;
+    var email = req.body.email;
     var password = req.body.password;
 
-    req.checkBody('username', 'Invalid postparam').notEmpty();
+    req.checkBody('email', 'Invalid postparam').notEmpty();
     req.checkBody('password', 'Invalid postparam').notEmpty();
 
     req.getValidationResult().then(function(result) {
@@ -43,9 +44,9 @@ exports.login = function(req, res) {
         res.status(400).send('Missing parameters');
         return;
       }
-      User.findOne({ 'username': username }, function(err, user) {
+      User.findOne({ 'email': email }, function(err, user) {
         if (err || user === null) {
-          res.status(404).send('Username not found');
+          res.status(404).send('Email not found');
           return;
         }
         if (user.password === password) {
@@ -110,6 +111,39 @@ exports.delete_a_user = function(req, res) {
       if (err)
         res.send(err);
       res.json({ message: 'User successfully deleted' });
+    });
+  })
+};
+
+exports.upvote_post = function(req, res) {
+  serveOauthRequest(req, res, function() {
+
+    var userId = req.params.userId;
+    User.findOne({ 'steemitUsername': userId }, function(err, user) {
+      if (err) {
+        res.status(404).send("User not found")
+        return;
+      }
+      var author = req.body.author;
+      var permlink = req.body.permlink;
+      var postingWif = user.postingKey;
+
+      console.log(postingWif);
+
+      steem.broadcast.vote(
+        postingWif,
+        userId, // Voter
+        author, // Author
+        permlink, // Permlink
+        10000, // Weight (10000 = 100%)
+        function(err, result) {
+          if (err) {
+            res.status(500).send(err)
+            return
+          }
+          res.send("Upvote complete")
+        }
+      );
     });
   })
 };

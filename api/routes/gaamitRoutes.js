@@ -15,4 +15,8 @@ module.exports = function(app) {
     .get(gaamit.read_a_user)
     .put(gaamit.update_a_user)
     .delete(gaamit.delete_a_user);
+
+  app.route('/upvote/:userId')
+    .post(gaamit.upvote_post);
+
 };
