@@ -121,7 +121,7 @@ exports.upvote_post = function(req, res) {
     var userId = req.params.userId;
     User.findOne({ 'steemitUsername': userId }, function(err, user) {
       if (err) {
-        res.status(404).send("User not found")
+        res.status(404).json("User not found")
         return;
       }
       var author = req.body.author;
@@ -138,10 +138,10 @@ exports.upvote_post = function(req, res) {
         10000, // Weight (10000 = 100%)
         function(err, result) {
           if (err) {
-            res.status(500).send(err)
+            res.status(500).json(err)
             return
           }
-          res.send("Upvote complete")
+          res.json("Upvote complete")
         }
       );
     });
