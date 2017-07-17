@@ -130,6 +130,32 @@ exports.follow_a_user = function(req, res) {
   });
 }
 
+exports.suggest_users = function(req, res) {
+  serveOauthRequest(req, res, function() {
+    User.find({}, function(err, users) {
+      if (err) {
+        res.send(err);
+      }
+      var user1;
+      var user2;
+      var user3;
+      do {
+        user1 = users[Math.floor(Math.random()*users.length)];
+        console.log(user1._id)
+      } while ( user1._id == req.params.userId)
+      do {
+        user2 = users[Math.floor(Math.random()*users.length)];
+        console.log(user2._id)
+      } while (user1 === user2 || user2._id == req.params.userId);
+      do {
+        user3 = users[Math.floor(Math.random()*users.length)];
+        console.log(user3._id)
+      } while (user3 === user1 || user3 === user2 || user3._id == req.params.userId)
+      res.json([user1, user2, user3]);
+    });
+  });
+}
+
 exports.upvote_post = function(req, res) {
   serveOauthRequest(req, res, function() {
 

@@ -19,6 +19,9 @@ module.exports = function(app) {
   app.route('/users/:follower/follow/:followed')
     .get(gaamit.follow_a_user);
 
+  app.route('/users/:userId/suggested')
+    .get(gaamit.suggest_users);
+
   app.route('/upvote/:userId')
     .post(gaamit.upvote_post);
 
