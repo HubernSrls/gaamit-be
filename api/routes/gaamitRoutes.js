@@ -16,6 +16,9 @@ module.exports = function(app) {
     .put(gaamit.update_a_user)
     .delete(gaamit.delete_a_user);
 
+  app.route('/users/username/:username')
+    .get(gaamit.read_a_user_by_username);
+
   app.route('/users/:follower/follow/:followed')
     .get(gaamit.follow_a_user);
 
