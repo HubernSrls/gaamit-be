@@ -19,8 +19,7 @@ var UserSchema = new Schema({
     type: String
   },
   steemitUsername: {
-    type: String,
-    unique: true
+    type: String
   },
   followers: {
     type: Schema.ObjectId,
