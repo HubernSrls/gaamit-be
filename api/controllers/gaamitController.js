@@ -73,6 +73,7 @@ exports.list_all_users = function(req, res) {
 
 exports.create_a_user = function(req, res) {
   serveOauthRequest(req, res, function() {
+    req.body.password = sha512(req.body.password);
     var new_user = new User(req.body);
     new_user.save(function(err, user) {
       if (err)
@@ -113,6 +114,21 @@ exports.delete_a_user = function(req, res) {
     });
   })
 };
+
+exports.follow_a_user = function(req, res) {
+  serveOauthRequest(req, res, function() {
+    var followed = req.params.followed;
+    var follower = req.params.follower;
+
+    User.findOneAndUpdate({ _id: followed }, { $push: { followers: follower } }, function(err, user) {
+      if (err) {
+        res.send(err);
+        return;
+      }
+      res.json("User Followed");
+    });
+  });
+}
 
 exports.upvote_post = function(req, res) {
   serveOauthRequest(req, res, function() {
