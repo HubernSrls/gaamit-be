@@ -3,7 +3,8 @@
 var mongoose = require('mongoose'),
   User = mongoose.model('Users'),
   fetch = require('node-fetch'),
-  steem = require('steem');
+  steem = require('steem'),
+  sha512 = require('js-sha512');
 
 function serveOauthRequest(req, res, success) {
   var token = req.get("Authorization");
@@ -34,7 +35,7 @@ exports.login = function(req, res) {
 
   serveOauthRequest(req, res, function() {
     var email = req.body.email;
-    var password = req.body.password;
+    var password = sha512(req.body.password);
 
     req.checkBody('email', 'Invalid postparam').notEmpty();
     req.checkBody('password', 'Invalid postparam').notEmpty();
@@ -50,7 +51,6 @@ exports.login = function(req, res) {
           return;
         }
         if (user.password === password) {
-          user.password = "";
           res.json(user);
         } else {
           res.status(403).send("Password error");
@@ -97,7 +97,6 @@ exports.update_a_user = function(req, res) {
     User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, function(err, user) {
       if (err)
         res.send(err);
-      user.password = "";
       res.json(user);
     });
   })
