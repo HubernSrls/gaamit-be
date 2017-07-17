@@ -3,7 +3,8 @@
 var mongoose = require('mongoose'),
   User = mongoose.model('Users'),
   fetch = require('node-fetch'),
-  steem = require('steem');
+  steem = require('steem'),
+  sha512 = require('js-sha512');
 
 function serveOauthRequest(req, res, success) {
   var token = req.get("Authorization");
@@ -34,7 +35,7 @@ exports.login = function(req, res) {
 
   serveOauthRequest(req, res, function() {
     var email = req.body.email;
-    var password = req.body.password;
+    var password = sha512(req.body.password);
 
     req.checkBody('email', 'Invalid postparam').notEmpty();
     req.checkBody('password', 'Invalid postparam').notEmpty();
@@ -50,7 +51,6 @@ exports.login = function(req, res) {
           return;
         }
         if (user.password === password) {
-          user.password = "";
           res.json(user);
         } else {
           res.status(403).send("Password error");
@@ -97,7 +97,6 @@ exports.update_a_user = function(req, res) {
     User.findOneAndUpdate({_id: req.params.userId}, req.body, {new: true}, function(err, user) {
       if (err)
         res.send(err);
-      user.password = "";
       res.json(user);
     });
   })
@@ -128,8 +127,6 @@ exports.upvote_post = function(req, res) {
       var permlink = req.body.permlink;
       var postingWif = user.postingKey;
 
-      console.log(postingWif);
-
       steem.broadcast.vote(
         postingWif,
         userId, // Voter
@@ -147,3 +144,51 @@ exports.upvote_post = function(req, res) {
     });
   })
 };
+
+exports.create_post = function(req, res) {
+  serveOauthRequest(req, res, function() {
+
+    var userId = req.params.userId;
+    User.findOne({ 'steemitUsername': userId }, function(err, user) {
+      if (err) {
+        res.status(404).json("User not found")
+        return;
+      }
+
+      var permlink = new Date().toISOString().replace(/[^a-zA-Z0-9]+/g, '').toLowerCase();
+      var postingWif = user.postingKey;
+
+      var title = req.body.title;
+      var body = req.body.body;
+
+      if (title === undefined || title === "") {
+        res.status(400).json("Title not found");
+        return;
+      } 
+
+      if (body === undefined || body === "") {
+        res.status(400).json("Body not found");
+        return;
+      }
+
+      steem.broadcast.comment(
+        postingWif,
+        '', // Leave parent author empty
+        "gaamit", // Main tag
+        userId, // Author
+        permlink + '-post', // Permlink
+        title, // Title
+        body, // Body
+        { tags: ['gamedev'], app: 'gaamit' }, // Json Metadata
+        function(err, result) {
+          if (err) {
+            res.status(500).json(err)
+            return
+          }
+          res.json("Post Uploaded")
+        }
+      );
+    });
+
+  });
+}
